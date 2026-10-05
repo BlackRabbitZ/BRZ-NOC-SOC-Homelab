@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.3
+
+- ShellCheck CI fix
+- Docker repository codename detection no longer sources `/etc/os-release`
+- ShellCheck now fails on warnings/errors, not informational/style messages
+- ShellCheck output changed to readable TTY format
+
+
 ## v0.2.0
 
 - pinned core container versions

@@ -25,10 +25,32 @@ curl -fsSL https://download.docker.com/linux/debian/gpg | \
   sudo tee /etc/apt/keyrings/docker.asc > /dev/null
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
+CODENAME="$(
+  awk -F= '
+    $1 == "VERSION_CODENAME" {
+      gsub(/"/, "", $2)
+      print $2
+      exit
+    }
+    $1 == "DEBIAN_CODENAME" {
+      fallback = $2
+      gsub(/"/, "", fallback)
+    }
+    END {
+      if (NR > 0 && fallback != "") print fallback
+    }
+  ' /etc/os-release | head -n1
+)"
+
+if [[ -z "$CODENAME" ]]; then
+  echo "Unable to determine Debian codename from /etc/os-release." >&2
+  exit 1
+fi
+
 echo \
 "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
 https://download.docker.com/linux/debian \
-$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+${CODENAME} stable" | \
 sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt update
