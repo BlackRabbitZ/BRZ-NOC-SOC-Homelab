@@ -8,7 +8,7 @@
 
 # 🛡️ BRZ NOC / SOC Homelab
 
-### Open-Source Network & Security Monitoring mit Raspberry Pi, Mirror/SPAN und zentralen Dashboards
+### Open-Source Network & Security Monitoring für Raspberry Pi, Mirror/SPAN und zentrale Dashboards
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi%204%20%7C%205-C51A4A)
@@ -22,104 +22,108 @@
 
 ## 📑 Inhaltsverzeichnis
 
-- [Was ist dieses Projekt?](#-was-ist-dieses-projekt)
-- [Warum genau diese Tools?](#-warum-genau-diese-tools)
-- [Warum Raspberry Pi 4 für NOC und Raspberry Pi 5 für SOC?](#-warum-raspberry-pi-4-für-noc-und-raspberry-pi-5-für-soc)
+- [Projekt](#-projekt)
+- [Ziel](#-ziel)
+- [Warum diese Tools?](#-warum-diese-tools)
+- [Warum Pi 4 für NOC und Pi 5 für SOC?](#-warum-pi-4-für-noc-und-pi-5-für-soc)
 - [Architektur](#-architektur)
-- [Was läuft wo?](#-was-läuft-wo)
-- [NOC-Anleitung](#-noc-anleitung)
-- [SOC-Anleitung](#-soc-anleitung)
+- [NOC](#-noc)
+- [SOC](#-soc)
+- [Zentraler Monitoring-Server](#-zentraler-monitoring-server)
+- [Docker & Docker Compose](#-docker--docker-compose)
 - [Netzwerkprinzip](#-netzwerkprinzip)
 - [Quick Start](#-quick-start)
 - [Repository-Struktur](#-repository-struktur)
-- [Weitere Dokumentation](#-weitere-dokumentation)
-- [Sicherheitsprinzipien](#-sicherheitsprinzipien)
-- [Roadmap](#-roadmap)
+- [Status](#-status)
+- [Sicherheit](#-sicherheit)
 - [Mitmachen](#-mitmachen)
 - [Lizenz](#-lizenz)
 
 ---
 
-## 🚀 Was ist dieses Projekt?
+## 🚀 Projekt
 
-**BRZ NOC / SOC Homelab** ist ein modularer, möglichst kostenloser und Open-Source-orientierter Monitoring- und Security-Stack für Heimnetzwerke, Labs und kleine Umgebungen.
+**BRZ NOC / SOC Homelab** ist ein modularer, selbst hostbarer Monitoring- und Security-Stack für Heimnetzwerke, Labs und kleine Umgebungen.
 
-Das Projekt trennt zwei Aufgaben bewusst:
+Das Projekt trennt Monitoring und Security bewusst:
 
-- 🟦 **NOC – Network Operations Center**  
-  Überwacht Verfügbarkeit, Netzwerkgeräte, Systeme und bekannte/unbekannte Geräte.
+- 🟦 **NOC auf Raspberry Pi 4**
+- 🟥 **SOC / Network Sensor auf Raspberry Pi 5**
+- 🟪 **Grafana + Prometheus + Loki auf einem separaten Server**
+- 🌐 **Router/Firewall + Managed Switch + optionale VLANs**
+- 🔎 **Port Mirroring / SPAN nur für den SOC-Sensor**
 
-- 🟥 **SOC – Security Operations Center / Network Sensor**  
-  Analysiert gespiegelten Netzwerkverkehr, erkennt Angriffe, wertet Security-Events aus und stellt Honeypot-/Log-Ereignisse bereit.
-
-Zusätzlich gibt es einen separaten zentralen Server für:
-
-```text
-Grafana     = Dashboards
-Prometheus  = Metriken
-Loki        = Logs
-```
+Der Stack ist so aufgebaut, dass möglichst viele Komponenten **kostenlos, Open Source und lokal betreibbar** sind.
 
 ---
 
-## 💡 Warum genau diese Tools?
+## 🎯 Ziel
 
-📘 **Mehr Details:** [Warum diese Tools?](docs/de/WHY-TOOLS.md)
+Ein übersichtliches Homelab, das gleichzeitig:
 
-Bei der Auswahl wurden bewusst Werkzeuge bevorzugt, die:
+- Geräte und Dienste überwacht
+- Switches, Router und Interfaces per SNMP überwacht
+- neue oder unbekannte Geräte erkennt
+- CPU, RAM, Storage und Temperatur visualisiert
+- Netzwerkverkehr analysiert
+- IDS-Alarme erkennt
+- Brute-Force-Angriffe erkennt
+- Honeypot-Ereignisse meldet
+- Logs und Metriken zentral in Grafana zusammenführt
+- möglichst ohne kostenpflichtige Enterprise-Produkte auskommt
 
-- **kostenlos nutzbar** sind,
-- **Open Source** oder zumindest in der benötigten Basisfunktion frei verfügbar sind,
-- auf Linux/Raspberry Pi gut funktionieren,
-- keine zwingende Cloud-Abhängigkeit haben,
-- lokal betrieben werden können,
-- gut dokumentiert sind,
-- miteinander kombinierbar sind,
-- und für Homelabs keine teuren Enterprise-Lizenzen voraussetzen.
+---
 
-> Ziel ist ein Stack, den möglichst viele Nutzer selbst hosten und nachvollziehen können.
+## 💡 Warum diese Tools?
+
+Bei der Auswahl wurden bewusst Tools bevorzugt, die:
+
+- kostenlos nutzbar sind
+- Open Source oder in der benötigten Basisfunktion frei verfügbar sind
+- lokal betrieben werden können
+- keine zwingende Cloud-Abhängigkeit haben
+- Linux / ARM64 gut unterstützen
+- gut dokumentiert sind
+- sich miteinander kombinieren lassen
+- für Homelabs keine teuren Enterprise-Lizenzen benötigen
 
 ### NOC
 
-| Tool | Warum wir es nehmen |
-|---|---|
-| **Uptime Kuma** | einfache, moderne und kostenlose Verfügbarkeitsüberwachung |
-| **LibreNMS** | leistungsfähiges SNMP-Monitoring für Router, Switches, APs und Server |
-| **Netdata** | sehr gute Echtzeit-Systemmetriken bei geringem Einrichtungsaufwand |
-| **NetAlertX** | erkennt neue/unbekannte Geräte und Netzwerkänderungen |
-| **ntopng** | zeigt Netzwerkverkehr, Hosts, Protokolle und Top-Talker; läuft physisch auf dem SOC-Sensor |
+| Tool | Aufgabe | Warum |
+|---|---|---|
+| **Uptime Kuma** | Verfügbarkeit | einfach, modern und kostenlos |
+| **LibreNMS** | SNMP-Monitoring | stark für Router, Switches, APs und Server |
+| **Netdata** | Systemmetriken | sehr gute Echtzeitwerte |
+| **NetAlertX** | Geräteerkennung | erkennt neue/unbekannte Geräte |
+| **ntopng** | Traffic-Analyse | Hosts, Protokolle, Flows, Top-Talker |
 
 ### SOC
 
-| Tool | Warum wir es nehmen |
+| Tool | Aufgabe | Warum |
+|---|---|---|
+| **Suricata** | IDS/IPS | etablierte Open-Source-Engine |
+| **EveBox** | Suricata-Events | übersichtliche Detailansicht |
+| **CrowdSec** | Log Detection | Brute Force, Scanner, Bots |
+| **OpenCanary** | Honeypot | leichtgewichtig und Open Source |
+| **ntopng** | Traffic-Sicht | ergänzt Suricata um Flow-/Traffic-Analyse |
+
+### Zentral
+
+| Tool | Aufgabe |
 |---|---|
-| **Suricata** | etablierte Open-Source IDS/IPS-Engine für Paket- und Signaturanalyse |
-| **EveBox** | übersichtliche Darstellung von Suricata-Ereignissen |
-| **CrowdSec** | Community-basierte, logbasierte Angriffserkennung |
-| **OpenCanary** | leichtgewichtiger Open-Source-Honeypot |
-| **ntopng** | ergänzt Suricata um Verkehrs-/Flow-Sicht statt reiner Security-Signaturen |
+| **Grafana** | Dashboards |
+| **Prometheus** | Metriken |
+| **Loki** | Logs |
 
-### Zentraler Server
-
-| Tool | Warum wir es nehmen |
-|---|---|
-| **Grafana** | zentrale Visualisierung und Dashboards |
-| **Prometheus** | de-facto Standard für frei verfügbare Metrik-Erfassung |
-| **Loki** | leichtgewichtige Log-Speicherung und Suche, eng mit Grafana integriert |
-
-Mehr dazu: [Warum diese Tools?](docs/de/WHY-TOOLS.md)
+📘 [Mehr Details: Warum diese Tools?](docs/de/WHY-TOOLS.md)
 
 ---
 
-## 🍓 Warum Raspberry Pi 4 für NOC und Raspberry Pi 5 für SOC?
-
-📘 **Mehr Details:** [Hardware & Raspberry-Pi-Rollen](docs/de/HARDWARE.md)
-
-Die Rollen haben sehr unterschiedliche Anforderungen.
+## 🍓 Warum Pi 4 für NOC und Pi 5 für SOC?
 
 ### Raspberry Pi 4 → NOC
 
-Der NOC-Pi führt überwiegend leichte bis mittlere Dienste aus:
+Der NOC-Pi führt hauptsächlich leichtere Monitoring-Aufgaben aus:
 
 ```text
 Uptime Kuma
@@ -128,42 +132,42 @@ Netdata
 NetAlertX
 ```
 
-Diese Dienste:
+Diese Dienste arbeiten überwiegend mit:
 
-- arbeiten hauptsächlich mit HTTP, SNMP, Ping, APIs oder periodischen Scans,
-- müssen nicht dauerhaft jedes Netzwerkpaket inspizieren,
-- benötigen normalerweise nur **einen normalen Ethernet-Port**,
-- und laufen daher gut auf einem Raspberry Pi 4 mit 4 GB RAM.
+- Ping
+- HTTP/S
+- SNMP
+- APIs
+- periodischen Scans
 
-### Raspberry Pi 5 → SOC / Network Sensor
+Sie müssen nicht dauerhaft jedes Netzwerkpaket inspizieren. Deshalb reicht ein **Raspberry Pi 4 mit 4 GB RAM** für diese Rolle gut aus.
 
-Der SOC-Pi verarbeitet deutlich mehr Daten:
+### Raspberry Pi 5 → SOC
+
+Der SOC-Pi verarbeitet wesentlich mehr Daten:
 
 ```text
 Suricata
-+
 ntopng
-+
 EveBox
-+
 CrowdSec
-+
 OpenCanary
 ```
 
-Vor allem **Suricata und ntopng** können permanent große Mengen Netzwerkverkehr analysieren.
+Vor allem **Suricata + ntopng** analysieren kontinuierlich Netzwerkverkehr.
 
-Darum profitiert der SOC deutlich von:
+Darum ist der Pi 5 sinnvoller:
 
-- stärkerer CPU des Raspberry Pi 5,
-- höherer Speicher-/I/O-Leistung,
-- besserer SSD/NVMe-Anbindung,
-- aktiver Kühlung,
-- und zusätzlichen Netzwerkports.
+- stärkere CPU
+- höhere I/O-Leistung
+- bessere SSD/NVMe-Anbindung
+- mehr Reserven für parallele Analyse
+- aktive Kühlung sinnvoll
+- Multi-Port-Netzwerkadapter nutzbar
 
-### Warum mehrere Netzwerkports?
+### Warum der Port-Adapter?
 
-Für einen sauberen passiven Sensor sollten Management und Paketmitschnitt getrennt sein:
+Ein sauberer passiver Sensor trennt Management und Packet Capture:
 
 ```text
 SOC Pi 5
@@ -182,34 +186,29 @@ Port 2
     └── ntopng
 
 Port 3+
-└── Reserve / spätere Erweiterungen
+└── Reserve
 ```
 
-Ein kompatibler **Multi-Port-Ethernet-Adapter für den Raspberry Pi 5** ist dafür ideal.
+Das Repository setzt **kein bestimmtes Adaptermodell** voraus.
 
-> Das Repository setzt kein bestimmtes Adaptermodell voraus. Entscheidend ist nur, dass Linux die Ports zuverlässig erkennt und mindestens ein separater Management- und ein separater Sensor-Port verfügbar sind.
-
-Mehr dazu: [Hardware- und Rollenwahl](docs/de/HARDWARE.md)
+📘 [Mehr Details: Hardware & Rollen](docs/de/HARDWARE.md)
 
 ---
 
 ## 🧩 Architektur
-
-📘 **Mehr Details:** [Architekturübersicht](docs/de/ARCHITECTURE.md)
 
 ```text
                               INTERNET
                                  │
                         Router / Firewall
                                  │
-                       LAN / optional VLANs
+                       LAN / optionale VLANs
                                  │
                           Managed Switch
                  ┌───────────────┼────────────────┐
                  │               │                │
-                 │               │                │
-             NOC Pi 4        SOC Pi 5        Clients/Server/
-                 │            │    │          IoT/weitere Netze
+             NOC Pi 4        SOC Pi 5        Clients / Server /
+                 │            │    │          IoT / weitere Netze
                  │            │    │
                  │            │    └── Mirror / SPAN
                  │            │
@@ -227,60 +226,271 @@ Mehr dazu: [Hardware- und Rollenwahl](docs/de/HARDWARE.md)
                     └─────────────────────┘
 ```
 
+📘 [Mehr Details: Architektur](docs/de/ARCHITECTURE.md)
+
 ---
 
-## 📦 Was läuft wo?
+## 🟦 NOC
 
-| System | Software |
+| Tool | Aufgabe |
 |---|---|
-| 🟦 **NOC Pi 4** | Uptime Kuma, LibreNMS, Netdata, NetAlertX |
-| 🟥 **SOC Pi 5** | Suricata, ntopng, EveBox, CrowdSec, OpenCanary |
-| 🟪 **Zentraler Server** | Grafana, Prometheus, Loki |
+| **Uptime Kuma** | Verfügbarkeit von Hosts und Diensten |
+| **LibreNMS** | SNMP, Router, Switches, APs, Interfaces |
+| **Netdata** | CPU, RAM, Storage, Temperatur, Prozesse |
+| **NetAlertX** | Geräteerkennung, IP/MAC, Online/Offline |
 
-> `ntopng` gehört funktional zum NOC, läuft aber auf dem SOC-Pi, weil dort der Mirror-/SPAN-Traffic bereits anliegt.
+### Läuft per Docker
 
-### 🟦 NOC-Anleitung
+```text
+Uptime Kuma
+NetAlertX
+Node Exporter
+Grafana Alloy
+```
 
-➡️ [**NOC installieren & konfigurieren**](docs/de/NOC.md)
+### Läuft nativ / separat
 
-Enthält unter anderem:
+```text
+Netdata
+LibreNMS
+```
 
-- Uptime Kuma
-- LibreNMS
-- Netdata
-- NetAlertX
-- Docker
-- Ports
-- Updates
-- Troubleshooting
+📘 [NOC installieren & konfigurieren](docs/de/NOC.md)  
+🐳 [NOC Docker Compose](noc/compose/compose.yaml)
 
-### 🟥 SOC-Anleitung
+---
 
-➡️ [**SOC / Network Sensor installieren & konfigurieren**](docs/de/SOC.md)
+## 🟥 SOC
 
-Enthält unter anderem:
+| Tool | Aufgabe |
+|---|---|
+| **Suricata** | IDS / Netzwerkangriffe / Signaturen |
+| **ntopng** | Traffic, Hosts, Protokolle, Top-Talker |
+| **EveBox** | Suricata-Alarme übersichtlich darstellen |
+| **CrowdSec** | logbasierte Angriffserkennung |
+| **OpenCanary** | Honeypot / Köderdienste |
 
-- Suricata
-- ntopng
-- EveBox
-- CrowdSec
-- OpenCanary
-- Mirror/SPAN
-- Multi-Port-NIC
-- Troubleshooting
+### Läuft per Docker
+
+```text
+CrowdSec
+EveBox
+Node Exporter
+Grafana Alloy
+```
+
+### Läuft nativ
+
+```text
+Suricata
+ntopng
+OpenCanary
+```
+
+> `ntopng` gehört funktional zum NOC, läuft aber physisch auf dem SOC-/Sensor-Pi, weil dort der Mirror-/SPAN-Traffic bereits anliegt.
+
+📕 [SOC / Network Sensor installieren & konfigurieren](docs/de/SOC.md)  
+🐳 [SOC Docker Compose](soc/compose/compose.yaml)
+
+---
+
+## 🟪 Zentraler Monitoring-Server
+
+```text
+Grafana     = Dashboards
+Prometheus  = Metriken
+Loki        = Logs
+```
+
+Der zentrale Server kann ein Linux-Server, Mini-PC, VM, NAS oder ein anderer dauerhaft laufender Host sein.
+
+### Datenfluss
+
+```text
+NOC Pi ── Node Exporter ───────────► Prometheus ─┐
+                                                │
+SOC Pi ── Node Exporter ───────────► Prometheus ─┤
+                                                ├──► Grafana
+NOC Logs ── Grafana Alloy ─────────► Loki ───────┤
+SOC Logs ── Grafana Alloy ─────────► Loki ───────┘
+
+Mirror / SPAN
+       │
+       ├──► Suricata ─► eve.json ─► Alloy ─► Loki
+       │                    │
+       │                    └────► EveBox
+       │
+       └──► ntopng
+```
+
+📘 [Datenpipelines](docs/de/PIPELINES.md)  
+🐳 [Server Docker Compose](server/compose/compose.yaml)
+
+---
+
+## 🐳 Docker & Docker Compose
+
+Ein Teil des Projekts läuft in Docker. Netzwerknahe Sensoren wie Suricata und ntopng werden bewusst nativ betrieben.
+
+### 1. Docker installieren
+
+Für Debian / Raspberry Pi OS:
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+
+sudo install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/debian/gpg | \
+  sudo tee /etc/apt/keyrings/docker.asc > /dev/null
+
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+https://download.docker.com/linux/debian \
+$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+
+sudo apt install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+sudo usermod -aG docker "$USER"
+```
+
+Danach einmal ab- und wieder anmelden.
+
+Prüfen:
+
+```bash
+docker --version
+docker compose version
+```
+
+### 2. Repository klonen
+
+```bash
+git clone https://github.com/BlackRabbitZ/BRZ-NOC-SOC-Homelab.git
+cd BRZ-NOC-SOC-Homelab
+```
+
+### 3. NOC starten
+
+```bash
+cd noc/compose
+cp .env.example .env
+nano .env
+```
+
+Anpassen:
+
+```text
+LOKI_URL=http://IP-DES-ZENTRALEN-SERVERS:3100/loki/api/v1/push
+SENSOR_NAME=noc-pi
+```
+
+Start:
+
+```bash
+docker compose up -d
+```
+
+### 4. SOC starten
+
+```bash
+cd ../../soc/compose
+cp .env.example .env
+nano .env
+```
+
+Anpassen:
+
+```text
+LOKI_URL=http://IP-DES-ZENTRALEN-SERVERS:3100/loki/api/v1/push
+SENSOR_NAME=soc-pi
+```
+
+Start:
+
+```bash
+docker compose up -d
+```
+
+### 5. Zentralen Server starten
+
+```bash
+cd ../../server/compose
+
+cp .env.example .env
+nano .env
+```
+
+Mindestens ändern:
+
+```text
+GF_SECURITY_ADMIN_PASSWORD=EIN-SEHR-STARKES-PASSWORT
+```
+
+Prometheus-Ziele:
+
+```bash
+cp prometheus/targets.json.example prometheus/targets.json
+nano prometheus/targets.json
+```
+
+Dann:
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+Weboberflächen:
+
+```text
+Grafana:    http://SERVER-IP:3000
+Prometheus: http://SERVER-IP:9090
+Loki:       http://SERVER-IP:3100
+```
+
+### Wichtige Docker-Befehle
+
+```bash
+docker compose ps
+docker compose logs -f
+docker compose pull
+docker compose up -d
+docker compose down
+docker compose config
+```
+
 ---
 
 ## 🌐 Netzwerkprinzip
 
-Das Projekt setzt **keine festen VLAN-IDs oder IP-Netze voraus**.
+VLANs sind **optional**.
 
-Es funktioniert:
+Beispiel:
 
-- in einem flachen LAN,
-- mit wenigen VLANs,
-- oder in stärker segmentierten Netzwerken.
+| VLAN | Zweck |
+|---:|---|
+| 10 | Management |
+| 20 | Clients |
+| 30 | Server |
+| 40 | IoT |
+| 50 | Kameras |
+| 60 | Gäste |
+| 100 | Monitoring |
+| 999 | Quarantäne |
 
-Empfohlen wird lediglich:
+Grundidee:
 
 ```text
 Monitoring-Netz → überwachte Netze
@@ -290,56 +500,50 @@ ALLOW nur benötigte Verbindungen
 DENY standardmäßig
 ```
 
-VLAN-Beispiele: [network/VLAN-PLAN.md](network/VLAN-PLAN.md)
+Der SOC-Pi nutzt zusätzlich einen dedizierten Mirror-/SPAN-Port.
 
-Firewall-Grundidee: [network/FIREWALL-EXAMPLE.md](network/FIREWALL-EXAMPLE.md)
-
----
-
+📘 [VLAN-Beispiel](network/VLAN-PLAN.md)  
+📘 [Firewall-Beispiel](network/FIREWALL-EXAMPLE.md)  
+📘 [Konfigurationsvorlage](network/CONFIGURATION-TEMPLATE.md)
 
 ---
 
 ## 🚀 Quick Start
 
-### NOC Basis vorbereiten
+### NOC
 
 ```bash
-git clone https://github.com/BlackRabbitZ/BRZ-NOC-SOC.git
-cd BRZ-NOC-SOC/noc/scripts
+git clone https://github.com/BlackRabbitZ/BRZ-NOC-SOC-Homelab.git
+cd BRZ-NOC-SOC-Homelab/noc/scripts
 chmod +x install-noc-base.sh
 ./install-noc-base.sh
 ```
 
-### SOC Basis vorbereiten
+### SOC
 
 ```bash
-git clone https://github.com/BlackRabbitZ/BRZ-NOC-SOC.git
-cd BRZ-NOC-SOC/soc/scripts
+git clone https://github.com/BlackRabbitZ/BRZ-NOC-SOC-Homelab.git
+cd BRZ-NOC-SOC-Homelab/soc/scripts
 chmod +x install-soc-base.sh
 ./install-soc-base.sh
 ```
 
-### Zentralen Server starten
-
-```bash
-cd BRZ-NOC-SOC/server/compose
-docker compose up -d
-```
-
-> Die Skripte ändern **keine VLANs, keine Firewall-Regeln, keine IP-Adressen und keine Switch-Konfiguration**.
+> Die Installer verändern **keine VLANs, keine IP-Adressen, keine Firewall-Regeln und keine Switch-Konfiguration**.
 
 ---
 
 ## 📁 Repository-Struktur
 
 ```text
-BRZ-NOC-SOC/
+BRZ-NOC-SOC-Homelab/
 ├── README.md
 ├── README-EN.md
 ├── LICENSE
 ├── SECURITY.md
 ├── CONTRIBUTING.md
 ├── ROADMAP.md
+├── CHANGELOG.md
+├── VERSIONS.md
 │
 ├── docs/
 │   ├── de/
@@ -347,31 +551,38 @@ BRZ-NOC-SOC/
 │   │   ├── SOC.md
 │   │   ├── WHY-TOOLS.md
 │   │   ├── HARDWARE.md
-│   │   └── ARCHITECTURE.md
+│   │   ├── ARCHITECTURE.md
+│   │   └── PIPELINES.md
 │   └── en/
 │       ├── NOC.md
 │       ├── SOC.md
 │       ├── WHY-TOOLS.md
 │       ├── HARDWARE.md
-│       └── ARCHITECTURE.md
+│       ├── ARCHITECTURE.md
+│       └── PIPELINES.md
 │
 ├── noc/
 │   ├── compose/
-│   │   └── compose.yaml
+│   │   ├── compose.yaml
+│   │   └── .env.example
+│   ├── alloy/
 │   └── scripts/
-│       └── install-noc-base.sh
 │
 ├── soc/
 │   ├── compose/
-│   │   └── compose.yaml
+│   │   ├── compose.yaml
+│   │   └── .env.example
+│   ├── alloy/
+│   ├── crowdsec/
+│   ├── opencanary/
+│   ├── systemd/
 │   ├── config/
-│   │   └── suricata-interface.example.yaml
 │   └── scripts/
-│       └── install-soc-base.sh
 │
 ├── server/
 │   └── compose/
 │       ├── compose.yaml
+│       ├── .env.example
 │       ├── prometheus/
 │       ├── loki/
 │       └── grafana/
@@ -381,60 +592,70 @@ BRZ-NOC-SOC/
 │   ├── FIREWALL-EXAMPLE.md
 │   └── CONFIGURATION-TEMPLATE.md
 │
+├── scripts/
+│   └── validate.sh
+│
 └── .github/
+    ├── workflows/
+    ├── dependabot.yml
     └── ISSUE_TEMPLATE/
 ```
 
 ---
 
-## 📚 Weitere Dokumentation
+## 🛠️ Status
 
-- [Warum diese Tools?](docs/de/WHY-TOOLS.md)
-- [Hardware & Raspberry-Pi-Rollen](docs/de/HARDWARE.md)
-- [Architektur](docs/de/ARCHITECTURE.md)
-- [VLAN-Beispiel](network/VLAN-PLAN.md)
-- [Firewall-Beispiel](network/FIREWALL-EXAMPLE.md)
-- [Konfigurationsvorlage](network/CONFIGURATION-TEMPLATE.md)
+### NOC
+- [x] Uptime Kuma
+- [x] LibreNMS
+- [x] Netdata
+- [x] NetAlertX
+- [x] Node Exporter
+- [x] Grafana Alloy
 
-Für Englisch siehe die verlinkte [README-EN.md](README-EN.md).
+### SOC
+- [x] Suricata
+- [x] ntopng
+- [x] EveBox
+- [x] CrowdSec
+- [x] OpenCanary
+- [x] Node Exporter
+- [x] Grafana Alloy
+
+### Zentral
+- [x] Grafana
+- [x] Prometheus
+- [x] Loki
+- [x] automatische Grafana-Datenquellen
+- [x] Starter-Dashboard
+- [x] Prometheus Target-Datei
+
+### Repository
+- [x] gepinnte Versionen
+- [x] GitHub Actions
+- [x] Dependabot
+- [x] Validierungsskript
+- [x] DE / EN Dokumentation
+
 ---
 
-## 🔐 Sicherheitsprinzipien
+## 🔐 Sicherheit
 
-- SOC-Sensor möglichst **passiv** betreiben.
 - Mirror-/SPAN-Port nicht als normales Management-Interface verwenden.
-- Management und Sensor-Traffic auf getrennte Interfaces legen.
+- SOC-Sensor-NIC möglichst ohne IP betreiben.
 - SNMPv3 bevorzugen.
-- Web-UIs nicht direkt ins Internet veröffentlichen.
-- Secrets niemals committen.
-- Keine pauschalen `ANY → ANY`-Firewall-Regeln.
+- Web-UIs nur aus vertrauenswürdigen Netzen erreichbar machen.
+- Dashboards nicht direkt ins Internet veröffentlichen.
+- Keine pauschalen `ANY → ANY`-Firewall-Regeln verwenden.
+- Passwörter, Tokens und Secrets niemals committen.
 
 Mehr: [SECURITY.md](SECURITY.md)
 
 ---
 
-## 🗺️ Roadmap
-
-- [x] NOC-Dokumentation
-- [x] SOC-Dokumentation
-- [x] Rollenaufteilung Pi 4 / Pi 5
-- [x] Grafana / Prometheus / Loki
-- [x] Compose-Beispiele
-- [x] Basis-Installer
-- [ ] fertige Grafana-Dashboards
-- [ ] Alerting-Beispiele
-- [ ] FreeRADIUS / 802.1X
-- [ ] Wazuh-Integration
-- [ ] Tactical-RMM-Integration
-- [ ] automatisierte Setup-Assistenten
-
-Mehr: [ROADMAP.md](ROADMAP.md)
-
----
-
 ## 🤝 Mitmachen
 
-Issues, Pull Requests und Verbesserungsvorschläge sind willkommen.
+Fehler, Verbesserungen und Pull Requests sind willkommen.
 
 Siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 

@@ -1,0 +1,29 @@
+{
+  "device.node_id": "brz-soc-canary",
+  "device.listen_addr": "0.0.0.0",
+  "ftp.enabled": true,
+  "ftp.port": 21,
+  "http.enabled": true,
+  "http.port": 8081,
+  "http.skin": "nasLogin",
+  "ssh.enabled": true,
+  "ssh.port": 2222,
+  "telnet.enabled": false,
+  "logger": {
+    "class": "PyLogger",
+    "kwargs": {
+      "formatters": {
+        "plain": {
+          "format": "%(message)s"
+        }
+      },
+      "handlers": {
+        "file": {
+          "class": "logging.FileHandler",
+          "filename": "/var/log/opencanary.log",
+          "formatter": "plain"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenCanary
+After=syslog.target network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/opencanary/venv/bin/opencanaryd --start --uid=nobody --gid=nogroup
+ExecStop=/opt/opencanary/venv/bin/opencanaryd --stop
+
+[Install]
+WantedBy=multi-user.target

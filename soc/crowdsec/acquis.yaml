@@ -1,0 +1,5 @@
+# Adjust these paths if your distribution logs elsewhere.
+filenames:
+  - /var/log/auth.log
+labels:
+  type: syslog

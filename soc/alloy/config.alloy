@@ -1,0 +1,39 @@
+logging {
+  level = "info"
+}
+
+loki.write "central" {
+  endpoint {
+    url = sys.env("LOKI_URL")
+  }
+}
+
+local.file_match "soc_logs" {
+  path_targets = [
+    {
+      "__path__" = "/var/log/suricata/eve.json",
+      "job"      = "suricata",
+      "sensor"   = sys.env("SENSOR_NAME"),
+    },
+    {
+      "__path__" = "/var/log/opencanary.log",
+      "job"      = "opencanary",
+      "sensor"   = sys.env("SENSOR_NAME"),
+    },
+    {
+      "__path__" = "/var/log/auth.log",
+      "job"      = "auth",
+      "sensor"   = sys.env("SENSOR_NAME"),
+    },
+    {
+      "__path__" = "/var/log/syslog",
+      "job"      = "system",
+      "sensor"   = sys.env("SENSOR_NAME"),
+    },
+  ]
+}
+
+loki.source.file "soc_logs" {
+  targets    = local.file_match.soc_logs.targets
+  forward_to = [loki.write.central.receiver]
+}

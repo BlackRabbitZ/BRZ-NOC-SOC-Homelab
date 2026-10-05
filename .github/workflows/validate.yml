@@ -1,0 +1,62 @@
+name: Validate repository
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+
+  yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: "."
+          config_data: |
+            extends: default
+            rules:
+              line-length: disable
+              truthy:
+                check-keys: false
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate NOC Compose
+        run: |
+          cp noc/compose/.env.example noc/compose/.env
+          docker compose -f noc/compose/compose.yaml config
+      - name: Validate SOC Compose
+        run: |
+          cp soc/compose/.env.example soc/compose/.env
+          docker compose -f soc/compose/compose.yaml config
+      - name: Validate central Compose
+        run: |
+          cp server/compose/.env.example server/compose/.env
+          sed -i 's/CHANGE-ME-NOW/ci-validation-password/' server/compose/.env
+          docker compose -f server/compose/compose.yaml config
+
+  json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in Path(".").rglob("*.json"):
+              json.loads(p.read_text())
+              print("OK", p)
+          PY

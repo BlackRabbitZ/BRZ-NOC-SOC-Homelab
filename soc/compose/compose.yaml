@@ -1,13 +1,64 @@
 services:
   crowdsec:
-    image: crowdsecurity/crowdsec:latest
+    image: crowdsecurity/crowdsec:v1.8.1
     container_name: crowdsec
     restart: unless-stopped
-
+    environment:
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/sshd"
     volumes:
-      - ./crowdsec/config:/etc/crowdsec
-      - ./crowdsec/data:/var/lib/crowdsec/data
+      - ./crowdsec-data:/var/lib/crowdsec/data
+      - ./crowdsec-config:/etc/crowdsec
+      - ../crowdsec/acquis.yaml:/etc/crowdsec/acquis.d/host.yaml:ro
       - /var/log:/var/log:ro
 
+  evebox:
+    image: jasonish/evebox:0.28.0-arm64v8
+    container_name: evebox
+    restart: unless-stopped
+    ports:
+      - "5636:5636"
+    command:
+      - server
+      - -D
+      - /var/lib/evebox
+      - --datastore
+      - sqlite
+      - --input
+      - /var/log/suricata/eve.json
+      - --host
+      - 0.0.0.0
+    volumes:
+      - evebox-data:/var/lib/evebox
+      - /var/log/suricata:/var/log/suricata:ro
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+
+  alloy:
+    image: grafana/alloy:v1.20.1
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
     environment:
-      TZ: Europe/Berlin
+      LOKI_URL: "${LOKI_URL:-http://CHANGE-ME:3100/loki/api/v1/push}"
+      SENSOR_NAME: "${SENSOR_NAME:-soc}"
+    volumes:
+      - ../alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy/data
+      - /var/log:/var/log:ro
+      - /etc/machine-id:/etc/machine-id:ro
+
+volumes:
+  evebox-data:
+  alloy-data:
