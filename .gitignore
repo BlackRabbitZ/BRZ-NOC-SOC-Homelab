@@ -1,0 +1,29 @@
+# Secrets
+.env
+*.env
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Runtime
+data/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+*.tar
+*.tar.gz
+*.zip
+
+# Editors/OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

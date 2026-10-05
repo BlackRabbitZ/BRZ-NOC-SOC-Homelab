@@ -1,0 +1,8 @@
+# Copy the relevant block into /etc/suricata/suricata.yaml
+# Replace SENSOR_INTERFACE with the actual mirror/SPAN interface.
+
+af-packet:
+  - interface: SENSOR_INTERFACE
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
